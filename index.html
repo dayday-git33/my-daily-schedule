@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Daily Schedule</title>
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color-scheme:light}body{margin:0;background:#f4f6fa;color:#172033}main{max-width:760px;margin:auto;padding:24px 16px}h1{margin-bottom:5px}p{color:#536176}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}button{background:#1d4ed8;color:white;border:0;border-radius:9px;padding:11px 15px;cursor:pointer}button.secondary{background:#e3e8f1;color:#172033}.block{display:grid;grid-template-columns:26px 110px 1fr auto;gap:12px;align-items:start;background:white;padding:15px;margin:12px 0;border-radius:12px;box-shadow:0 2px 10px #18263a0c}.block.done{opacity:.6}.block.done .desc{text-decoration:line-through}input[type=time],textarea{box-sizing:border-box;width:100%;border:1px solid #d0d7e2;border-radius:7px;padding:8px;font:inherit}textarea{resize:vertical;min-height:52px}.remove{background:#fce8e8;color:#8a1d1d}small{color:#667085}@media(max-width:550px){.block{grid-template-columns:25px 1fr auto}.block input[type=time]{grid-column:2}.block textarea{grid-column:2/4}.remove{grid-column:3;grid-row:1}}
+</style>
+</head>
+<body><main><h1>My Daily Schedule</h1><p>Your editable weekday routine. Check off tasks as you complete them.</p><div class="toolbar"><button id="add">+ Add time block</button><button id="reset" class="secondary">Restore starting routine</button></div><div id="schedule"></div><small>Changes are saved automatically in this browser. They do not sync between devices.</small></main>
+<script>
+const KEY='dayday-schedule-v1';
+const defaults=[
+['06:00','Wake up, drink water, make bed and get ready'],
+['06:15','Morning exercise or movement'],
+['07:00','Breakfast and get ready for work'],
+['07:30','Morning commute — listen to podcasts'],
+['08:30','Work'],
+['12:30','Lunch — eat, walk or check in with family'],
+['13:30','Work'],
+['17:00','Commute home — music or calls'],
+['18:30','Shower and change'],
+['18:45','Dinner, meal preparation and clean-up'],
+['20:00','Music practice or creative work'],
+['21:00','Relax and prepare clothes and bag for tomorrow'],
+['22:00','Bedtime']
+].map(([time,desc])=>({time,desc,done:false}));
+let blocks;
+try{const saved=JSON.parse(localStorage.getItem(KEY));blocks=Array.isArray(saved)?saved:structuredClone(defaults)}catch{blocks=structuredClone(defaults)}
+const container=document.getElementById('schedule');
+function save(){try{localStorage.setItem(KEY,JSON.stringify(blocks))}catch(e){alert('Could not save changes in this browser.')}}
+function render(){container.replaceChildren();blocks.forEach((block,i)=>{const card=document.createElement('section');card.className='block'+(block.done?' done':'');const check=document.createElement('input');check.type='checkbox';check.checked=!!block.done;check.setAttribute('aria-label','Mark task complete');check.onchange=()=>{block.done=check.checked;save();render()};const time=document.createElement('input');time.type='time';time.value=block.time;time.setAttribute('aria-label','Time');time.onchange=()=>{block.time=time.value;save()};const desc=document.createElement('textarea');desc.className='desc';desc.value=block.desc;desc.setAttribute('aria-label','Task description');desc.oninput=()=>{block.desc=desc.value;save()};const remove=document.createElement('button');remove.className='remove';remove.textContent='Delete';remove.onclick=()=>{blocks.splice(i,1);save();render()};card.append(check,time,desc,remove);container.append(card)})}
+document.getElementById('add').onclick=()=>{blocks.push({time:'12:00',desc:'New task',done:false});save();render()};
+document.getElementById('reset').onclick=()=>{if(confirm('Replace your current schedule with the starting routine?')){blocks=structuredClone(defaults);save();render()}};
+render();
+</script></body></html>
